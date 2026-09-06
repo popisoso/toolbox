@@ -1,0 +1,27 @@
+{
+  "name": "toolbox",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Owned, modular, studio-grade media production toolkit (PWA).",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "icons": "node scripts/make-icons.mjs",
+    "test": "playwright test",
+    "test:unit": "node --import tsx --test tests/unit/*.test.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.4.1",
+    "@webgpu/types": "^0.1.72",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0"
+  }
+}
