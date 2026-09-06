@@ -11,7 +11,7 @@ import { createSourceFactory } from './video/source';
 import { createExporter, type Exporter } from './export/exporter';
 import { createAnthropicHook } from './ai/assistant';
 import { createGpuInfo } from './gpu/webgpu';
-import type { Logger, ModuleContext, ModuleInstance, ModuleManifest, Viewport } from './module';
+import type { Logger, ModuleContext, ModuleInstance, ModuleManifest, PointerState, Viewport } from './module';
 
 export interface HostOptions {
   initialParams?: Record<string, ParamValue>;
@@ -27,6 +27,7 @@ export class ModuleHost {
   readonly loop: RenderLoop;
   readonly exporter: Exporter;
   readonly viewport: Viewport = { width: 1, height: 1, dpr: 1 };
+  readonly pointer: PointerState = { x: 0.5, y: 0.5, down: false, inside: false };
   instance: ModuleInstance | null = null;
   /** Last error thrown by the module; the shell surfaces it. */
   error: Error | null = null;
@@ -62,9 +63,29 @@ export class ModuleHost {
       gpu: createGpuInfo(),
       log,
       inputs: new Map(),
+      pointer: this.pointer,
     };
     this.instance = manifest.create(ctx);
+    this.bindPointer();
   }
+
+  private bindPointer(): void {
+    const c = this.canvas;
+    const update = (e: PointerEvent) => {
+      const r = c.getBoundingClientRect();
+      this.pointer.x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      this.pointer.y = 1 - Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    };
+    this.pointerHandlers = [
+      ['pointerdown', (e) => { update(e); this.pointer.down = true; this.pointer.inside = true; c.setPointerCapture?.(e.pointerId); }],
+      ['pointermove', (e) => { update(e); this.pointer.inside = true; }],
+      ['pointerup', (e) => { update(e); this.pointer.down = false; }],
+      ['pointercancel', () => { this.pointer.down = false; }],
+      ['pointerleave', () => { this.pointer.inside = false; if (!this.pointer.down) this.pointer.inside = false; }],
+    ];
+    for (const [t, h] of this.pointerHandlers) c.addEventListener(t, h as EventListener);
+  }
+  private pointerHandlers: Array<[string, (e: PointerEvent) => void]> = [];
 
   async mount(): Promise<void> {
     if (!this.instance) throw new Error('Host already disposed');
@@ -112,6 +133,7 @@ export class ModuleHost {
 
   dispose(): void {
     this.disposed = true;
+    for (const [t, h] of this.pointerHandlers) this.canvas.removeEventListener(t, h as EventListener);
     this.loop.stop();
     this.unsubscribe?.();
     this.resizeObserver?.disconnect();

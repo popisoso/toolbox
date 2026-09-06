@@ -38,7 +38,13 @@ Decisions:
   Adding a module never edits engine or shell code. `_shared/` is excluded from discovery.
 - **`ui()` is an escape hatch, not the default.** Auto-generated controls cover ranges, toggles,
   selects, colours and actions. A module mounts custom UI only for things that are genuinely
-  interactive (the source picker). Custom UI must use tokens.
+  interactive (the source picker). Custom UI must use tokens. It is called after `init()` so it may
+  rely on GL resources.
+- **Paused clock = held frame.** `RenderLoop.setPaused` freezes `clock.time` and sets `dt = 0`.
+  Stateful modules (feedback, simulations, ring buffers) advance only when `dt > 0`. This is what
+  lets "Still" export a frame that is byte-identical to what is on screen, and it is tested that way.
+- **Pointer is part of the context.** `ctx.pointer` (normalised, y up, `down`, `inside`) is tracked
+  by the host on the canvas, so interaction never requires a module to touch the DOM.
 
 ## Seams
 
@@ -50,6 +56,8 @@ Decisions:
 | Export | `engine/export/exporter.ts` | Working: PNG stills; MP4 (Safari) / WebM (Chromium) recording via `MediaRecorder`; share sheet on iOS. Frame-accurate offline render (WebCodecs) is the planned second implementation behind the same interface. |
 | AI (Anthropic) | `engine/ai/assistant.ts` (`AIHook`) | Hook only. Official SDK, lazy-loaded chunk, user's own key from Settings, browser-direct calls. No module uses it. A relay server would replace the provider behind the same interface. |
 | GPU compute | `engine/gpu/webgpu.ts` (`GpuInfo`) | Detection + lazy device. Baseline stays WebGL2 (see below). |
+| State buffers | `engine/gl/target.ts` (`OffscreenTarget({float})`, `PingPong`, `TextureArrayTarget`) | Working: half-float targets with RGBA8 fallback, ping-pong pairs, layered frame buffers. Used by feedback-loop, morphogenesis, datamosh, time-slice. |
+| Interaction | `ModuleContext.pointer` | Working: pointer/touch over the canvas. Used by morphogenesis (brush). |
 
 ## Rendering baseline: WebGL2, WebGPU as an opt-in accelerator
 
@@ -96,11 +104,25 @@ error capture (a throwing module stops its loop and the shell shows the message;
 Stills are captured with `RenderLoop.onceAfterFrame` instead of `preserveDrawingBuffer`, which is
 cheaper on mobile GPUs.
 
+## Shared module code lives in `src/modules/_shared`, not the engine
+
+`SourceInput` (procedural field or live video behind one texture), `Blit`, and the GLSL chunk
+library (`noise`, `grid`, `fit`, `hash`) are module-level conveniences. They depend on the engine;
+the engine never depends on them. Anything a module *needs* to talk to the shell goes through the
+contract; anything modules merely *share* stays here, so the engine stays small.
+
 ## Testing strategy
 
 - Unit (`node --test`): pure engine logic (params, timeline).
 - Browser (Playwright, Chromium with SwiftShader, desktop + iPhone-sized projects): shell
   navigation, generated controls, pixel-statistics assertions on the shader's three regimes,
   fake-camera video path, token re-skin, manifest shape, offline reload through the service worker.
+- Per-module behaviour: feedback decays to black and clears; reaction-diffusion grows from seeds,
+  clears flat, and grows again under the pointer; datamosh is a pass-through at intensity 0 and
+  deterministic in seed/time; time-slice equals the live frame on a static buffer and differs on a
+  moving one.
+- Export: for every module, the "Still" download is decoded in Node (own PNG decoder), checked for
+  canvas dimensions and non-blank content, and compared byte-for-byte with the frame the module
+  rendered. "Record" is downloaded and its container is probed with ffmpeg.
 - Not verifiable in CI: actual Add to Home Screen / Add to Dock. Those need a real iOS/macOS
   device against an HTTPS origin; see TOOLBOX.md → Install.

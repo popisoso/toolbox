@@ -66,7 +66,7 @@ export function renderTool(root: HTMLElement, id: string): () => void {
 
   const unsubControls = buildControls(host, panelBody);
   panelBody.prepend(custom);
-  const cleanupUi = host.instance?.ui?.(custom);
+  let cleanupUi: void | (() => void);
   const unsubPersist = host.params.subscribe(() => {
     try { localStorage.setItem(PARAMS_STORAGE(id), JSON.stringify(host.params.snapshot())); } catch { /* ignore */ }
   });
@@ -99,7 +99,10 @@ export function renderTool(root: HTMLElement, id: string): () => void {
   immersive.addEventListener('click', () => setImmersive(true));
   canvas.addEventListener('pointerdown', () => { if (view.classList.contains('tool--immersive')) setImmersive(false); });
 
-  const ready = host.mount().catch((e: Error) => { errorBox.hidden = false; errorBox.textContent = e.message; });
+  // Custom UI mounts after init() so modules can rely on their GL resources.
+  const ready = host.mount()
+    .then(() => { cleanupUi = host.instance?.ui?.(custom); })
+    .catch((e: Error) => { errorBox.hidden = false; errorBox.textContent = e.message; });
 
   window.__toolbox = {
     moduleId: id,
