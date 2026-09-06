@@ -7,7 +7,10 @@ const executablePath = process.env.CHROMIUM_PATH;
 export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 120_000, // software GL on CI runners is slow; simulations need headroom
-  fullyParallel: false,
+  // Each test is independent (fresh page), so the scheduling unit is the test:
+  // that lets `--shard` balance heavy tests across CI runners. Still one worker:
+  // two software-GL contexts on one runner are slower than one.
+  fullyParallel: true,
   workers: 1,
   reporter: [['list']],
   use: {

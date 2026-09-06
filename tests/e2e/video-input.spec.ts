@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { pixelStats, setParam, waitForTool } from './helpers';
 
-test.describe('video-input module (fake camera)', () => {
+test.describe('video-input module (fake camera) @slow', () => {
   test('starts the camera and renders frames through the grid resampler', async ({ page }) => {
     await page.goto('/#/tool/video-input');
     await waitForTool(page);

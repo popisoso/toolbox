@@ -7,7 +7,7 @@ import { decodePng, lumaStats } from './png';
 
 const MODULES = ['noise-grid', 'feedback-loop', 'morphogenesis', 'datamosh', 'time-slice', 'video-input'];
 
-test.describe('export', () => {
+test.describe('export @slow', () => {
   for (const id of MODULES) {
     test(`${id}: Still downloads the exact rendered frame as a valid PNG`, async ({ page }, testInfo) => {
       await page.goto(`/#/tool/${id}`);
