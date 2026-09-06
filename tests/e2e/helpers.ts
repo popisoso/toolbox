@@ -73,3 +73,24 @@ export async function pixelStats(page: Page): Promise<PixelStats> {
     };
   }, dataUrl);
 }
+
+/** Freeze the module clock (dt = 0) so stateful modules hold their frame. */
+export async function pause(page: Page, paused = true): Promise<void> {
+  await page.evaluate((p) => window.__toolbox!.host.loop.setPaused(p), paused);
+  await waitFrames(page, 2);
+}
+
+export async function waitFrames(page: Page, n: number): Promise<void> {
+  const start = await page.evaluate(() => window.__toolbox!.host.loop.clock.frame);
+  await page.waitForFunction((target) => window.__toolbox!.host.loop.clock.frame >= target, start + n, { timeout: 60_000 });
+}
+
+export async function clickAction(page: Page, key: string): Promise<void> {
+  await page.locator(`button[data-action="${key}"]`).click();
+  await waitFrames(page, 2);
+}
+
+export async function snapshotBytes(page: Page): Promise<Buffer> {
+  const url = await page.evaluate(() => window.__toolbox!.snapshot());
+  return Buffer.from(url.split(',')[1]!, 'base64');
+}

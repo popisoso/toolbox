@@ -6,7 +6,7 @@ const executablePath = process.env.CHROMIUM_PATH;
 
 export default defineConfig({
   testDir: 'tests/e2e',
-  timeout: 60_000,
+  timeout: 120_000, // software GL on CI runners is slow; simulations need headroom
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],

@@ -8,6 +8,15 @@ What exists, how to run it, how to add a tool, how to install it.
 |---|---|---|---|
 | `noise-grid` | shader | Procedural noise field; the **Grid** control (0→1) goes continuous → mosaic → discrete point grid. Reference module. | webgl2 |
 | `video-input` | video | Camera or video file with grading (exposure/contrast/saturation, mirror) and the same grid resampler on live frames. | webgl2 (+ camera when used) |
+| `feedback-loop` | shader | Recursive video feedback: previous frame zoomed, rotated, drifted, decayed and hue-shifted, with the source injected (add/mix/max/difference). Camera in the loop makes a drifting mirror. | webgl2 |
+| `morphogenesis` | shader | Gray-Scott reaction-diffusion. Presets (spots, mitosis, worms, coral, maze), pointer paints catalyst, source brightness biases the feed so an image "infects" the field. | webgl2 (float targets preferred) |
+| `datamosh` | post | Compression-artefact aesthetics: block displacement, frozen macroblocks that hold last output, tearing, channel split, posterise. Deterministic in seed + time. | webgl2 |
+| `time-slice` | video | Slit-scan / temporal displacement over a 48-frame ring buffer; position, radius, noise or luma decide how far back each pixel looks. | webgl2 |
+
+The four newer tools share `src/modules/_shared/source-input.ts`: with nothing attached they run on
+the procedural field, and the picker (camera / video file) swaps in live frames without the module
+caring. Every tool exports a Still (PNG) and a Recording; the export tests download the files and
+verify them byte-for-byte against the rendered frame.
 
 Shell features shared by every tool: auto-generated controls (bottom sheet on phones, side panel on
 wide screens), per-tool param persistence, Still export (PNG), Record (MP4 on Safari, WebM on
@@ -32,12 +41,19 @@ npm run icons      # regenerate public/icons from scripts/make-icons.mjs
 2. Declare `params` as data; read them with `ctx.params.number('key')` in `render`.
 3. In `render`, call `target.bind(gl)` first, then draw. Use `Program`, `FullscreenQuad`, and
    `resolveIncludes()` for shared GLSL (`_shared/glsl/*.glsl`) if it is a fragment-shader tool.
-4. Need live video? Mount `mountSourcePicker` in `ui()` and read `source.texture(gl)`.
+4. Need an input image? Use `SourceInput` from `_shared/source-input.ts`: mount its picker in `ui()`
+   (called after `init()`), call `update(clock, w, h)` each frame, sample `texture()`. It falls back
+   to the procedural field, so the tool always has something to chew on.
+4b. Stateful (feedback, simulation, buffers)? Use `PingPong` / `OffscreenTarget({ float: true })` /
+   `TextureArrayTarget` from the engine, and advance only when `clock.dt > 0` so a paused clock
+   holds the frame (that is what makes exports byte-stable).
+4c. Interaction? Read `ctx.pointer` (normalised, y up, `down`/`inside`).
 5. Need a button? Add an `action` param and implement `onAction`.
 6. Done. It appears on the home screen; the shell greys it out on devices missing a `requires`.
 
 Nothing in `src/engine` or `src/shell` changes. `video-input` was added this way after
-`noise-grid`, with zero engine edits.
+`noise-grid`, with zero engine edits; the four later tools needed three engine *additions*
+(float/array targets, pointer state) but no edits to existing engine or shell behaviour.
 
 Minimal skeleton:
 

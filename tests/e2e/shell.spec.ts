@@ -5,7 +5,7 @@ test.describe('shell', () => {
   test('home lists every registered module and opens one', async ({ page }) => {
     await page.goto('/');
     const cards = page.locator('[data-testid="tool-grid"] .tool-card');
-    await expect(cards).toHaveCount(2);
+    await expect(cards).toHaveCount(6);
     await expect(page.locator('.tool-card[data-module="noise-grid"]')).toBeVisible();
     await expect(page.locator('.tool-card[data-module="video-input"]')).toBeVisible();
 

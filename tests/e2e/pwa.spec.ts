@@ -37,7 +37,7 @@ test.describe('PWA', () => {
     });
     await context.setOffline(true);
     await page.reload();
-    await expect(page.locator('[data-testid="tool-grid"] .tool-card')).toHaveCount(2);
+    await expect(page.locator('[data-testid="tool-grid"] .tool-card')).toHaveCount(6);
     await page.goto('/#/tool/noise-grid');
     await page.waitForFunction(() => !!window.__toolbox);
     await context.setOffline(false);
