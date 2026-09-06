@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { clickAction, pause, pixelStats, setParam, snapshotBytes, waitForTool, waitFrames } from './helpers';
 
-test.describe('feedback-loop', () => {
+test.describe('feedback-loop @slow', () => {
   test('accumulates, decays to black without injection, and clears', async ({ page }) => {
     await page.goto('/#/tool/feedback-loop');
     await waitForTool(page);
@@ -37,7 +37,7 @@ test.describe('feedback-loop', () => {
   });
 });
 
-test.describe('morphogenesis', () => {
+test.describe('morphogenesis @slow', () => {
   test('grows structure from seeds, clears flat, and the pointer paints catalyst', async ({ page }) => {
     test.slow(); // ten simulation steps per frame on software GL
     await page.goto('/#/tool/morphogenesis');
@@ -77,7 +77,7 @@ test.describe('morphogenesis', () => {
   });
 });
 
-test.describe('datamosh', () => {
+test.describe('datamosh @slow', () => {
   test('intensity 0 is a clean pass-through; corruption is deterministic in seed and time', async ({ page }) => {
     await page.goto('/#/tool/datamosh');
     await waitForTool(page);
@@ -105,7 +105,7 @@ test.describe('datamosh', () => {
   });
 });
 
-test.describe('time-slice', () => {
+test.describe('time-slice @slow', () => {
   test('static buffer equals the live frame; a moving buffer displaces time by position', async ({ page }) => {
     await page.goto('/#/tool/time-slice');
     await waitForTool(page);

@@ -1,5 +1,8 @@
 # Deploys dist/ to GitHub Pages on every push to main.
-# One-time repo setup: Settings → Pages → Source: "GitHub Actions".
+# configure-pages (enablement: true) creates the Pages site on first run using
+# the workflow token's `pages: write` permission, so no manual repo setup is
+# needed. If your org policy blocks that, enable it once under
+# Settings → Pages → Source: "GitHub Actions".
 name: Deploy to GitHub Pages
 on:
   push:
@@ -17,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22

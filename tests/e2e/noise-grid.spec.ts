@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { pixelStats, setParam, waitForTool } from './helpers';
 
-test.describe('noise-grid module', () => {
+test.describe('noise-grid module @slow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/#/tool/noise-grid');
     await waitForTool(page);
