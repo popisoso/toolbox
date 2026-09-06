@@ -32,8 +32,18 @@ npm run preview    # serve dist/ on :4173; the service worker only runs in produ
 # sub-path build (as GitHub Pages serves it): BASE_PATH=/toolbox/ npm run build && BASE_PATH=/toolbox/ npm run preview
 npm run test:unit
 CHROMIUM_PATH=/path/to/chrome npm test   # Playwright; omit CHROMIUM_PATH if `npx playwright install chromium` was run
+npm run test:fast  # shell, tokens, PWA (~1 min): the quick loop while working on the shell
+npm run test:heavy # module behaviour + export downloads (@slow suites)
 npm run icons      # regenerate public/icons from scripts/make-icons.mjs
 ```
+
+### CI layout
+
+`.github/workflows/ci.yml` runs on pull requests and on pushes to `main`, and skips entirely for
+Markdown-only or Pages-workflow-only changes. Two tiers: `fast` (typecheck, unit, build, the light
+browser suite) lands first; `heavy` runs the `@slow` suites sharded over four runners. The Chromium
+download is cached between runs. Superseded runs on the same PR are cancelled. Tag a new module's
+behaviour spec `@slow` in its `describe` title so it lands in the sharded tier.
 
 ## Add a tool
 

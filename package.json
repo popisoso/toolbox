@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "icons": "node scripts/make-icons.mjs",
     "test": "playwright test",
+    "test:fast": "playwright test --grep-invert @slow",
+    "test:heavy": "playwright test --grep @slow",
     "test:unit": "node --import tsx --test tests/unit/*.test.ts"
   },
   "devDependencies": {

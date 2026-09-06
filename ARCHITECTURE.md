@@ -124,5 +124,8 @@ contract; anything modules merely *share* stays here, so the engine stays small.
 - Export: for every module, the "Still" download is decoded in Node (own PNG decoder), checked for
   canvas dimensions and non-blank content, and compared byte-for-byte with the frame the module
   rendered. "Record" is downloaded and its container is probed with ffmpeg.
+- CI: software GL makes browser tests 5–10× slower than on a laptop, so the suite is split by a
+  `@slow` tag into a fast tier and a sharded heavy tier, with test-level scheduling
+  (`fullyParallel: true`) so shards balance. Markdown and Pages-workflow changes skip CI.
 - Not verifiable in CI: actual Add to Home Screen / Add to Dock. Those need a real iOS/macOS
   device against an HTTPS origin; see TOOLBOX.md → Install.
