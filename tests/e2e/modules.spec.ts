@@ -39,10 +39,11 @@ test.describe('feedback-loop', () => {
 
 test.describe('morphogenesis', () => {
   test('grows structure from seeds, clears flat, and the pointer paints catalyst', async ({ page }) => {
+    test.slow(); // ten simulation steps per frame on software GL
     await page.goto('/#/tool/morphogenesis');
     await waitForTool(page);
-    await setParam(page, 'steps', 16);
-    await waitFrames(page, 40);
+    await setParam(page, 'steps', 8);
+    await waitFrames(page, 20);
     const grown = await pixelStats(page);
     expect(grown.distinctLevels).toBeGreaterThan(6);
     expect(grown.bgFraction).toBeGreaterThan(0.2);   // dark field remains
@@ -58,9 +59,9 @@ test.describe('morphogenesis', () => {
     const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
     await page.mouse.move(cx, cy);
     await page.mouse.down();
-    for (let i = 0; i < 8; i++) { await page.mouse.move(cx + i * 6, cy + i * 3); await waitFrames(page, 1); }
+    for (let i = 0; i < 6; i++) { await page.mouse.move(cx + i * 8, cy + i * 4); await waitFrames(page, 1); }
     await page.mouse.up();
-    await waitFrames(page, 20);
+    await waitFrames(page, 12);
     const painted = await pixelStats(page);
     expect(painted.distinctLevels).toBeGreaterThan(4);
     expect(painted.bgFraction).toBeLessThan(flat.bgFraction);

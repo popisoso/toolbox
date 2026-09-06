@@ -25,14 +25,14 @@ export interface Exporter {
   recordingMimeType(): string | null;
 }
 
-// H.264 MP4 first (Safari; plays everywhere Apple), then WebM (Chromium).
-// Plain 'video/mp4' last: Chromium answers it with VP9-in-MP4, which
-// QuickTime cannot open, so WebM is the better Chromium default.
+// WebM first: Chromium's WebM recorder is mature, while its MP4 output is
+// new and not always a well-formed file. Safari does not record WebM at all,
+// so it falls through to H.264 MP4, which plays everywhere Apple.
 const CANDIDATE_TYPES = [
-  'video/mp4;codecs=avc1',
   'video/webm;codecs=vp9',
   'video/webm;codecs=vp8',
   'video/webm',
+  'video/mp4;codecs=avc1',
   'video/mp4',
 ];
 
