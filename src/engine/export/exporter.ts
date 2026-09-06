@@ -25,12 +25,15 @@ export interface Exporter {
   recordingMimeType(): string | null;
 }
 
+// WebM first: Chromium's WebM recorder is mature, while its MP4 output is
+// new and not always a well-formed file. Safari does not record WebM at all,
+// so it falls through to H.264 MP4, which plays everywhere Apple.
 const CANDIDATE_TYPES = [
-  'video/mp4;codecs=avc1',
-  'video/mp4',
   'video/webm;codecs=vp9',
   'video/webm;codecs=vp8',
   'video/webm',
+  'video/mp4;codecs=avc1',
+  'video/mp4',
 ];
 
 export function createExporter(canvas: HTMLCanvasElement, loop: RenderLoop): Exporter {

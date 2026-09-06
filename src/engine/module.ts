@@ -58,6 +58,16 @@ export interface Viewport {
   dpr: number;
 }
 
+/** Pointer/touch state over the canvas, normalised to 0..1 with y up (GL convention). */
+export interface PointerState {
+  x: number;
+  y: number;
+  /** A button/finger is down. */
+  down: boolean;
+  /** Pointer is over the canvas. */
+  inside: boolean;
+}
+
 export interface Logger {
   info(...a: unknown[]): void;
   warn(...a: unknown[]): void;
@@ -80,6 +90,8 @@ export interface ModuleContext {
   log: Logger;
   /** Textures wired in by the compositor (keys from `manifest.inputs`). */
   inputs: ReadonlyMap<string, WebGLTexture>;
+  /** Live pointer over the canvas (interaction seam). */
+  pointer: PointerState;
 }
 
 export interface ModuleInstance {
@@ -89,6 +101,8 @@ export interface ModuleInstance {
    * Draw one frame into `target`. `target.framebuffer` is `null` for the
    * screen or an FBO when the compositor is capturing this module's output.
    * Implementations must bind the target themselves via `target.bind(gl)`.
+   * `clock.dt === 0` means the clock is paused: stateful modules must not
+   * advance their simulation, so a held frame exports byte-stable.
    */
   render(clock: Clock, target: RenderTarget): void;
   /** Drawing-buffer size changed. */
@@ -98,8 +112,9 @@ export interface ModuleInstance {
   /** An `action` param was pressed. */
   onAction?(key: string): void | Promise<void>;
   /**
-   * Optional custom UI beyond the auto-generated controls. Return a cleanup.
-   * Use tokens (var(--…)) only; never hard-code visual style here.
+   * Optional custom UI beyond the auto-generated controls. Called after
+   * `init()` resolves. Return a cleanup. Use tokens (var(--…)) only; never
+   * hard-code visual style here.
    */
   ui?(host: HTMLElement): void | (() => void);
   dispose(): void;
