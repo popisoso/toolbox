@@ -49,6 +49,20 @@ nothing in the engine or shell changes. Step-by-step in [TOOLBOX.md](TOOLBOX.md)
 All colour, type, spacing, radii, shadows and motion live in `src/styles/tokens.css`. The shipped
 values are neutral placeholders.
 
+## Privacy and security
+
+- **Nothing leaves your device by default.** No analytics, no telemetry, no third-party scripts or
+  fonts. The service worker caches only this site's own files.
+- **Camera and files** are processed on the GPU in your browser and never uploaded. The camera
+  starts only when you press the button and stops when you press Stop or leave the tool.
+- **AI hook**: the one optional external connection is to the Anthropic API, only if you enter your
+  own API key in Settings. The key is stored in this browser's local storage, in plain text, and
+  sent only to `api.anthropic.com`. Remove it from Settings at any time. No tool uses it yet.
+- **Exports** (stills, recordings) go straight to your Files app / share sheet / downloads folder.
+- The production page ships a strict Content-Security-Policy (scripts, styles and workers from this
+  origin only; network only to this origin and the Anthropic API) and a no-referrer policy.
+- If you self-host or fork: the app has no server side, so there is nothing to configure or leak.
+
 ## Documentation
 
 - [TOOLBOX.md](TOOLBOX.md): tools, running, adding a tool, re-skinning, renaming, installing, what is not done yet.

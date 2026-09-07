@@ -1,0 +1,46 @@
+/**
+ * Injects a Content-Security-Policy <meta> into the production index.html.
+ * Build-only: Vite's dev server relies on inline styles/scripts for HMR.
+ *
+ * What the policy allows, and why:
+ *  - scripts/styles/workers/manifest from this origin only (no CDNs, no inline)
+ *  - connect-src: this origin (service worker precache) + the Anthropic API,
+ *    the only external endpoint the app can ever talk to, and only when the
+ *    user has entered their own key
+ *  - img/media: blob: and data: for exported stills, video files and the
+ *    camera MediaStream
+ *  - object/base/form: none. Nothing embeds, nothing rebases, nothing posts.
+ */
+import type { Plugin } from 'vite';
+
+export const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob: mediastream:",
+  "connect-src 'self' https://api.anthropic.com",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "font-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+export function csp(): Plugin {
+  return {
+    name: 'toolbox:csp',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        return html.replace(
+          '<meta charset="utf-8" />',
+          `<meta charset="utf-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+        );
+      },
+    },
+  };
+}
