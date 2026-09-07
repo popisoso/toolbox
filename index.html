@@ -30,10 +30,55 @@
       #boot:not(.failed) .boot-err, #boot.failed .boot-wait, #boot.failed .boot-stuck { display: none; }
       @keyframes boot-in { to { opacity: 1; } }
     </style>
-    <!-- Reports a failed script load or a startup exception into #boot instead
-         of leaving the page blank. Classic script so it runs even when the
-         module graph cannot load. -->
-    <script src="boot.js"></script>
+    <!-- Boot guard. Inline (hash-allowed by the CSP) so it runs even when no
+         other request completes. Reports a failed script load or a startup
+         exception into #boot; and if the shell has not rendered after a few
+         seconds while a service worker controls the page, unregisters the
+         worker, clears its caches and reloads once. -->
+    <script>
+      (function () {
+        'use strict';
+        var HEAL_AFTER_MS = 6000;
+        var HEAL_FLAG = 'toolbox.healed';
+        function boot() { return document.getElementById('boot'); }
+        function fail(message) {
+          var b = boot();
+          if (!b) return; // app already rendered; not a boot failure
+          b.className = 'failed';
+          var pre = b.querySelector('.boot-err pre');
+          if (pre) pre.textContent = message;
+        }
+        window.addEventListener('error', function (e) {
+          var t = e.target;
+          if (t && t !== window && (t.src || t.href)) { fail('Could not load ' + (t.src || t.href)); return; }
+          var where = e.filename ? '\n' + e.filename.replace(/^.*\//, '') + ':' + e.lineno : '';
+          fail((e.message || 'Script error') + where);
+        }, true);
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason;
+          fail(r && r.message ? r.message : String(r));
+        });
+        setTimeout(function () {
+          var b = boot();
+          var sw = navigator.serviceWorker;
+          if (!b || b.className === 'failed' || !sw || !sw.controller) return;
+          var healed = false;
+          try { healed = sessionStorage.getItem(HEAL_FLAG) === '1'; } catch (e) { /* ignore */ }
+          if (healed) return; // already tried once this session; do not loop
+          try { sessionStorage.setItem(HEAL_FLAG, '1'); } catch (e) { /* ignore */ }
+          var note = b.querySelector('.boot-heal');
+          if (note) note.hidden = false;
+          var budget = new Promise(function (r) { setTimeout(r, 3000); });
+          var work = Promise.resolve()
+            .then(function () { return sw.getRegistrations(); })
+            .then(function (regs) { return Promise.all(regs.map(function (r) { return r.unregister(); })); })
+            .then(function () { return typeof caches !== 'undefined' ? caches.keys() : []; })
+            .then(function (keys) { return Promise.all(keys.map(function (k) { return caches.delete(k); })); })
+            .catch(function () { /* best effort */ });
+          Promise.race([work, budget]).then(function () { location.reload(); });
+        }, HEAL_AFTER_MS);
+      })();
+    </script>
   </head>
   <body>
     <div id="app">
@@ -41,6 +86,7 @@
         <noscript><p>Toolbox needs JavaScript. Enable it in your browser settings and reload.</p></noscript>
         <p class="boot-wait">Loading Toolbox…</p>
         <p class="boot-stuck">Still loading. Check your connection and reload. If this keeps happening, try a private tab.</p>
+        <p class="boot-heal" hidden>Resetting the offline copy and reloading…</p>
         <div class="boot-err"><p>Toolbox could not start. Reload to try again.</p><pre></pre></div>
       </div>
     </div>

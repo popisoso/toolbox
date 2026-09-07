@@ -90,9 +90,14 @@ is written (manifests cannot read CSS). Theme choice is one attribute: `<html da
 - `public/manifest.webmanifest` uses relative URLs so the same build works at `/` and `/toolbox/`.
 - `vite/pwa-precache.ts` emits `sw.js` at build with the exact asset list and a content hash.
 - `index.html` never stays blank: a CSP-hashed inline boot fallback shows "Loading" after 1.5 s and
-  a hint after 8 s, and `public/boot.js` (a classic script, so it runs even when the module graph
-  fails to load) prints a failed script load or a startup exception into it. The shell's first
-  render replaces `#app`'s children, which removes the fallback.
+  a hint after 8 s, and a CSP-hashed inline boot guard (inline so it runs even when no other
+  request completes) prints a failed script load or a startup exception into it. If nothing has
+  rendered after 6 s while a service worker controls the page, the guard unregisters the worker,
+  clears its caches and reloads once per session. The shell's first render replaces `#app`'s
+  children, which removes the fallback.
+- The worker's fetch path never writes to the cache (the precache at install is complete) and
+  every cache lookup has a timeout, so a misbehaving CacheStorage cannot leave requests pending.
+  Seen in the wild on iOS Safari: page HTML arrives, every script and stylesheet stays pending.
   Cache-first for hashed assets, network-first for navigation with the cached shell as fallback.
   `ignoreVary: true` is deliberate: hosts that send `Vary: Origin` otherwise miss crossorigin
   module scripts (found via vite preview, which does exactly that).
