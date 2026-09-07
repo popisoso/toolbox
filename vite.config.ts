@@ -22,12 +22,14 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        // Keep the Anthropic SDK in its own chunk so it is only downloaded when
-        // a module actually invokes the AI hook (see src/engine/ai/assistant.ts).
-        manualChunks(id) {
-          if (id.includes('@anthropic-ai/sdk')) return 'anthropic-sdk';
-          return undefined;
-        },
+        // The Anthropic SDK is only ever imported dynamically
+        // (src/engine/ai/assistant.ts), so Rollup already splits it into its own
+        // chunk that loads on first use; this only names that chunk. Do not
+        // reintroduce a manualChunks rule for it: that pulled Vite's preload
+        // helper into the SDK chunk, and the entry then imported the whole SDK
+        // eagerly on every page load.
+        chunkFileNames: (chunk) =>
+          chunk.moduleIds.some((id) => id.includes('@anthropic-ai/sdk')) ? 'assets/anthropic-sdk-[hash].js' : 'assets/[name]-[hash].js',
       },
     },
   },

@@ -114,7 +114,8 @@ The app must be served over HTTPS (or `localhost`) for the service worker and in
 **Free hosting that is already wired up: GitHub Pages.**
 `.github/workflows/pages.yml` builds with `BASE_PATH=/toolbox/` and deploys on every push to
 `main`. One-time setup in the repo: Settings → Pages → Source: **GitHub Actions**. The app is then
-at `https://<owner>.github.io/toolbox/`.
+at **https://popisoso.github.io/toolbox/** (the `/toolbox/` path is the repository name; the bare
+`https://popisoso.github.io/` is not this site and returns GitHub's 404).
 
 - **iPhone (iOS Safari):** open the URL → Share → **Add to Home Screen** → Add. Opens fullscreen
   (standalone), works offline after the first visit.

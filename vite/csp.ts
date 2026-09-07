@@ -10,7 +10,13 @@
  *  - img/media: blob: and data: for exported stills, video files and the
  *    camera MediaStream
  *  - object/base/form: none. Nothing embeds, nothing rebases, nothing posts.
+ *  - frame-ancestors is deliberately absent: it is ignored (with a console
+ *    error) when delivered via <meta>, and Pages cannot send headers.
+ *  - the one inline <style> in index.html (the boot fallback) is allowed by
+ *    its SHA-256 hash, computed here from the final HTML, so 'unsafe-inline'
+ *    is never needed.
  */
+import { createHash } from 'node:crypto';
 import type { Plugin } from 'vite';
 
 export const CSP = [
@@ -26,7 +32,8 @@ export const CSP = [
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
-  "frame-ancestors 'none'",
+  // frame-ancestors is header-only; browsers ignore it in a <meta> tag and log
+  // an error. GitHub Pages cannot set response headers, so it is left out.
 ].join('; ');
 
 export function csp(): Plugin {
@@ -36,9 +43,12 @@ export function csp(): Plugin {
     transformIndexHtml: {
       order: 'post',
       handler(html) {
+        const hashes = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+          .map((m) => `'sha256-${createHash('sha256').update(m[1]!).digest('base64')}'`);
+        const policy = CSP.replace("style-src 'self'", ["style-src 'self'", ...hashes].join(' '));
         return html.replace(
           '<meta charset="utf-8" />',
-          `<meta charset="utf-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+          `<meta charset="utf-8" />\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`,
         );
       },
     },

@@ -89,6 +89,10 @@ is written (manifests cannot read CSS). Theme choice is one attribute: `<html da
 
 - `public/manifest.webmanifest` uses relative URLs so the same build works at `/` and `/toolbox/`.
 - `vite/pwa-precache.ts` emits `sw.js` at build with the exact asset list and a content hash.
+- `index.html` never stays blank: a CSP-hashed inline boot fallback shows "Loading" after 1.5 s and
+  a hint after 8 s, and `public/boot.js` (a classic script, so it runs even when the module graph
+  fails to load) prints a failed script load or a startup exception into it. The shell's first
+  render replaces `#app`'s children, which removes the fallback.
   Cache-first for hashed assets, network-first for navigation with the cached shell as fallback.
   `ignoreVary: true` is deliberate: hosts that send `Vary: Origin` otherwise miss crossorigin
   module scripts (found via vite preview, which does exactly that).
