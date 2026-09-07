@@ -6,6 +6,10 @@ on:
   pull_request:
     paths-ignore: ['**.md', '.github/workflows/pages.yml']
 
+# Least privilege: CI only reads the repo.
+permissions:
+  contents: read
+
 # A new push to the same branch/PR supersedes the run in progress.
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}

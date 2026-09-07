@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
 import { pwaPrecache } from './vite/pwa-precache';
+import { csp } from './vite/csp';
 
 // BASE_PATH lets the same build be served from a sub-path (e.g. GitHub Pages
 // serves the repo at /<repo>/). Defaults to root for local dev/preview.
@@ -8,7 +9,7 @@ const base = process.env.BASE_PATH ?? '/';
 
 export default defineConfig({
   base,
-  plugins: [pwaPrecache()],
+  plugins: [pwaPrecache(), csp()],
   resolve: {
     alias: {
       '@engine': fileURLToPath(new URL('./src/engine', import.meta.url)),
