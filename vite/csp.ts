@@ -12,9 +12,9 @@
  *  - object/base/form: none. Nothing embeds, nothing rebases, nothing posts.
  *  - frame-ancestors is deliberately absent: it is ignored (with a console
  *    error) when delivered via <meta>, and Pages cannot send headers.
- *  - the one inline <style> in index.html (the boot fallback) is allowed by
- *    its SHA-256 hash, computed here from the final HTML, so 'unsafe-inline'
- *    is never needed.
+ *  - the inline <style> and <script> in index.html (the boot fallback and its
+ *    guard) are allowed by SHA-256 hashes computed here from the final HTML,
+ *    so 'unsafe-inline' is never needed.
  */
 import { createHash } from 'node:crypto';
 import type { Plugin } from 'vite';
@@ -43,9 +43,13 @@ export function csp(): Plugin {
     transformIndexHtml: {
       order: 'post',
       handler(html) {
-        const hashes = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+        const hashesOf = (re: RegExp) => [...html.matchAll(re)]
           .map((m) => `'sha256-${createHash('sha256').update(m[1]!).digest('base64')}'`);
-        const policy = CSP.replace("style-src 'self'", ["style-src 'self'", ...hashes].join(' '));
+        const styleHashes = hashesOf(/<style[^>]*>([\s\S]*?)<\/style>/g);
+        const scriptHashes = hashesOf(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g);
+        const policy = CSP
+          .replace("style-src 'self'", ["style-src 'self'", ...styleHashes].join(' '))
+          .replace("script-src 'self'", ["script-src 'self'", ...scriptHashes].join(' '));
         return html.replace(
           '<meta charset="utf-8" />',
           `<meta charset="utf-8" />\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`,
