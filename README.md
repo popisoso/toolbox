@@ -33,7 +33,12 @@ npm run test:unit  # engine unit tests
 
 The app needs an HTTPS origin. GitHub Pages is wired up: enable it once under
 Settings → Pages → Source: **GitHub Actions**, and every push to `main` deploys to
-`https://<owner>.github.io/toolbox/`.
+
+**https://popisoso.github.io/toolbox/**
+
+Note the `/toolbox/` path: a project site lives under the repository name. The bare
+`https://popisoso.github.io/` is a different site (it would need a repository named
+`popisoso.github.io`) and shows GitHub's 404 page.
 
 - **iPhone (Safari):** Share → **Add to Home Screen**.
 - **Mac (Safari):** File → **Add to Dock…**

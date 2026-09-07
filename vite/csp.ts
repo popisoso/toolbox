@@ -10,6 +10,8 @@
  *  - img/media: blob: and data: for exported stills, video files and the
  *    camera MediaStream
  *  - object/base/form: none. Nothing embeds, nothing rebases, nothing posts.
+ *  - frame-ancestors is deliberately absent: it is ignored (with a console
+ *    error) when delivered via <meta>, and Pages cannot send headers.
  */
 import type { Plugin } from 'vite';
 
@@ -26,7 +28,8 @@ export const CSP = [
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
-  "frame-ancestors 'none'",
+  // frame-ancestors is header-only; browsers ignore it in a <meta> tag and log
+  // an error. GitHub Pages cannot set response headers, so it is left out.
 ].join('; ');
 
 export function csp(): Plugin {

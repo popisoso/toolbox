@@ -2,7 +2,9 @@
 # ONE-TIME REPO SETUP (cannot be done from a workflow: the Actions token is
 # not allowed to create the Pages site): Settings → Pages → Build and
 # deployment → Source: "GitHub Actions". After that, re-run this workflow
-# from the Actions tab or push to main. Site: https://<owner>.github.io/<repo>/
+# from the Actions tab or push to main.
+# Site: https://<owner>.github.io/<repo>/ (for this repo: https://popisoso.github.io/toolbox/).
+# The bare https://<owner>.github.io/ is NOT this site; project sites live under the repo name.
 name: Deploy to GitHub Pages
 on:
   push:
