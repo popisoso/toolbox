@@ -43,6 +43,18 @@ test.describe('PWA', () => {
     await context.setOffline(false);
   });
 
+  test('offline with no cached shell shows a message, not a blank page', async ({ page, context }) => {
+    await page.goto('/');
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+    // Simulate the browser having evicted the offline copy while keeping the worker.
+    await page.evaluate(async () => { for (const k of await caches.keys()) await caches.delete(k); });
+    await context.setOffline(true);
+    await page.reload();
+    await expect(page.locator('body')).toContainText('could not be loaded');
+    await context.setOffline(false);
+  });
+
   test('install hint is shown when not running standalone', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('install-hint')).toBeVisible();

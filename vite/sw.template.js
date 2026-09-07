@@ -29,6 +29,11 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
+const escapeHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const offlinePage = (reason) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Toolbox</title>
+<style>body{margin:0;padding:24px;font:16px/1.45 system-ui,-apple-system,sans-serif}p{margin:0 0 8px}pre{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,monospace}</style></head>
+<body><p>Toolbox could not be loaded and no offline copy is stored on this device yet.</p><p>Check your connection, then <a href="./">try again</a>.</p><pre>${escapeHtml(reason)}</pre></body></html>`;
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -37,14 +42,20 @@ self.addEventListener('fetch', (event) => {
 
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
+      let reason = '';
       try {
         const fresh = await fetch(req);
         const cache = await caches.open(CACHE);
         cache.put(SHELL, fresh.clone());
         return fresh;
-      } catch {
-        return (await caches.match(SHELL, { ignoreVary: true })) || Response.error();
+      } catch (e) {
+        reason = (e && e.message) || String(e);
       }
+      const shell = await caches.match(SHELL, { ignoreVary: true });
+      if (shell) return shell;
+      // No network and no cached shell: say so. A network-error response here
+      // would leave the user looking at a blank page with nothing to act on.
+      return new Response(offlinePage(reason), { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
     })());
     return;
   }
